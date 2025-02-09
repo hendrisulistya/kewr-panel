@@ -1,0 +1,109 @@
+<div
+  class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md mt-4"
+  id="pm2-section"
+>
+  <h1 class="text-2xl font-bold mb-6">PM2 Status</h1>
+
+  <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+    <div class="text-gray-600 text-sm mb-4">Runtime Status</div>
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-6 h-6 flex items-center justify-center">
+            {% if pm2_installed %}
+            <span class="text-green-600">✓</span>
+            {% else %}
+            <span class="text-red-600">✗</span>
+            {% endif %}
+          </div>
+          <span class="text-gray-700 font-medium">PM2</span>
+        </div>
+        <div class="text-right">
+          {% if pm2_installed %}
+          <span class="text-sm text-gray-600">{{ pm2_version }}</span>
+          {% else %}
+          <span class="text-sm text-red-600">Not Installed</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if not pm2_installed %}
+      <div class="space-y-4">
+        <span class="text-red-600">Not Installed</span>
+        <div class="mt-4">
+          <p class="text-sm text-gray-600 mb-2">Installation Instructions:</p>
+          {% if os_type == "MacOS" or os_type == "Windows" %}
+          <p class="text-sm text-gray-700 mb-2">Install PM2 using npm:</p>
+          <div class="bg-gray-100 p-2 rounded font-mono text-sm mb-4">
+            npm install -g pm2
+          </div>
+          <button
+            hx-post="/api/install-pm2"
+            hx-target="#installation-log"
+            hx-swap="show"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-200"
+          >
+            Install PM2
+          </button>
+          {% elif os_type == "Linux" %}
+          <p class="text-sm text-gray-700 mb-2">Install PM2 using npm:</p>
+          <div class="bg-gray-100 p-2 rounded font-mono text-sm mb-4">
+            sudo npm install -g pm2
+          </div>
+          <button
+            hx-post="/api/install-pm2"
+            hx-target="#installation-log"
+            hx-swap="show"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-200"
+          >
+            Install PM2
+          </button>
+          {% else %}
+          <p class="text-sm text-gray-700">
+            Unable to determine your operating system. Please visit the
+            <a
+              href="https://pm2.keymetrics.io/docs/usage/quick-start/"
+              class="text-blue-600 hover:underline"
+              target="_blank"
+              >PM2 documentation</a
+            >
+            for installation instructions.
+          </p>
+          {% endif %}
+        </div>
+
+        <!-- Installation Log Section -->
+        <div id="installation-log" class="mt-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2">
+            Installation Progress
+          </h3>
+          <div
+            class="bg-black text-green-400 p-4 rounded-md font-mono text-sm h-48 overflow-y-auto relative border border-gray-700"
+          >
+            <div
+              id="log-content"
+              class="whitespace-pre-wrap break-words"
+              hx-ext="sse"
+              sse-connect="/api/install-pm2"
+              sse-swap="message"
+            ></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+    document.body.addEventListener("htmx:sseMessage", function (event) {
+      const logContent = document.getElementById("log-content");
+      if (logContent) {
+        logContent.scrollTop = logContent.scrollHeight;
+        if (event.detail.message.includes("completed successfully")) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        }
+      }
+    });
+  </script>
+</div>

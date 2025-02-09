@@ -1,0 +1,116 @@
+<div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
+  <h1 class="text-2xl font-bold mb-6">System Monitor</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+      <div class="text-gray-600 text-sm mb-2">CPU Usage</div>
+      <div class="relative w-32 h-32 mx-auto">
+        <svg class="w-full h-full" viewBox="0 0 36 36">
+          <path
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#E5E7EB"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <path
+            class="cpu-usage-circle"
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#3B82F6"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="100, 100"
+            style="stroke-dasharray: {{ cpu_usage }}, 100"
+          />
+        </svg>
+        <div
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+        >
+          <div class="text-xl font-bold text-gray-800 cpu-usage-value">
+            {{ cpu_usage | round(precision=1) }}%
+          </div>
+          <div class="text-xs text-gray-500">CPU</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+      <div class="text-gray-600 text-sm mb-2">Memory Usage</div>
+      <div class="relative w-32 h-32 mx-auto">
+        <svg class="w-full h-full" viewBox="0 0 36 36">
+          <path
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#E5E7EB"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <path
+            class="memory-usage-circle"
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#3B82F6"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="100, 100"
+            style="stroke-dasharray: {{ (memory_used * 100 / memory_total) | round(precision=1) }}, 100"
+          />
+        </svg>
+        <div
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+        >
+          <div class="text-xl font-bold text-gray-800 memory-usage-value">
+            {{ (memory_used * 100 / memory_total) | round(precision=1) }}%
+          </div>
+          <div class="text-xs text-gray-500">Memory</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
+      <div class="text-gray-600 text-sm mb-2">Disk Usage</div>
+      <div class="relative w-32 h-32 mx-auto">
+        <svg class="w-full h-full" viewBox="0 0 36 36">
+          <path
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#E5E7EB"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <path
+            class="disk-usage-circle"
+            d="M18 2.0845
+            a 15.9155 15.9155 0 0 1 0 31.831
+            a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="#3B82F6"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-dasharray="100, 100"
+            style="stroke-dasharray: {{ (disk_used * 100 / disk_total) | round(precision=1) }}, 100"
+          />
+        </svg>
+        <div
+          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+        >
+          <div class="text-xl font-bold text-gray-800 disk-usage-value">
+            {{ (disk_used * 100 / disk_total) | round(precision=1) }}%
+          </div>
+          <div class="text-xs text-gray-500">Disk</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
