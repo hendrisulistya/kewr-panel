@@ -6,7 +6,9 @@ use log::info;
 use tera::Tera;
 
 mod services;
-use services::{system::SystemInfo, node::NodeInfo, pm2::PM2Info, database::DatabaseService};
+mod config;
+use services::{system::SystemInfo, node::NodeInfo, pm2::PM2Info, database::DatabaseService, file_manager::FileManagerService};
+use crate::config::WorkingDirectoryConfig;
 
 #[derive(Serialize)]
 struct SystemStats {
@@ -29,6 +31,7 @@ struct SystemStats {
 struct AppState {
     sys: Mutex<System>,
     tera: Tera,
+    file_manager: FileManagerService,
 }
 
 async fn get_system_stats(data: web::Data<AppState>) -> impl Responder {
@@ -159,7 +162,16 @@ async fn install_pm2() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    let working_dirs = WorkingDirectoryConfig::new();
+    
+    // Test directory permissions
+    if let Err(e) = services::permission_test::test_directory_permissions(&working_dirs) {
+        eprintln!("Permission test failed: {}", e);
+        std::process::exit(1);
+    }
+    
+    // Continue with the rest of the application
+    working_dirs.ensure_directories_exist()?;
 
     let mut tera = Tera::new("templates/**/*").unwrap();
     tera.autoescape_on(vec!["html", "htm", "xml"]);
@@ -171,12 +183,58 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 sys: Mutex::new(System::new_all()),
                 tera: tera.clone(),
+                file_manager: FileManagerService::new(working_dirs.clone()),
             }))
+            .service(actix_files::Files::new("/js", "www/js").show_files_listing())
             .route("/", web::get().to(index))
             .route("/api/system/stats", web::get().to(get_system_stats))
             .route("/api/install-pm2", web::post().to(install_pm2))
+            .route("/api/files/{path:.*}", web::get().to(list_directory))
+            .route("/api/files/{path:.*}/content", web::get().to(read_file))
+            .route("/api/files/{path:.*}", web::put().to(write_file))
+            .route("/api/files/{path:.*}", web::delete().to(delete_file))
     })
     .bind("127.0.0.1:8080")?
     .run()
     .await
+}
+
+async fn list_directory(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
+    let relative_path = path.into_inner();
+    match data.file_manager.list_directory(&relative_path) {
+        Ok(files) => HttpResponse::Ok().json(files),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e.to_string()
+        })),
+    }
+}
+
+async fn read_file(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
+    let relative_path = path.into_inner();
+    match data.file_manager.read_file(&relative_path) {
+        Ok(content) => HttpResponse::Ok().body(content),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e.to_string()
+        })),
+    }
+}
+
+async fn write_file(data: web::Data<AppState>, path: web::Path<String>, content: String) -> impl Responder {
+    let relative_path = path.into_inner();
+    match data.file_manager.write_file(&relative_path, &content) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e.to_string()
+        })),
+    }
+}
+
+async fn delete_file(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
+    let relative_path = path.into_inner();
+    match data.file_manager.delete_file(&relative_path) {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": e.to_string()
+        })),
+    }
 }
